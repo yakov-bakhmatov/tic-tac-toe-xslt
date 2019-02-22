@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8"/>
+    <head>
+        <title>Hello, XSLT!</title>
+        <style>
+            label {
+                display: block;
+            }
+            table {
+                width: 100%;
+            }
+            td {
+                height: auto;
+                width: 33%;
+                vertical-align: top;
+            }
+            button {
+                width: 200px;
+            }
+            .controls {
+                height: 40px;
+                text-align: center;
+            }
+            .output {
+                height: 300px;
+                text-align: center;
+            }
+            .spacer {
+                height: 20px;
+            }
+            svg {
+                display: block;
+                margin: auto;
+            }
+        </style>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <td rowspan="3">
+                    <!-- xslt -->
+                    <label for="preprocessor-xslt">Preprocessor XSLT</label>
+                    <textarea cols="50" rows="10" id="preprocessor-xslt"></textarea>
+                    <label for="processor-xslt">Processor XSLT</label>
+                    <textarea cols="50" rows="10" id="processor-xslt"></textarea>
+                    <label for="postprocessor-xslt">Postprocessor XSLT</label>
+                    <textarea cols="50" rows="10" id="postprocessor-xslt"></textarea>
+                </td>
+                <td>
+                    <!-- initial xml -->
+                    <label for="input-xml">Input XML</label>
+                    <textarea cols="50" rows="2" id="input-xml"></textarea>
+                </td>
+                <td>
+                    <!-- parameters -->
+                    <label for="parameters">Parameters</label>
+                    <textarea cols="50" rows="2" id="parameters"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <!-- controls -->
+                    <div class="controls">
+                        <button type="button" id="init" onclick="onInit()">Init/Reset</button>
+                        <button type="button" id="step" onclick="onStep()">Step</button>
+                    </div>
+                    <div id="output" class="output"></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <label for="output-xml">Output XML</label>
+                    <textarea cols="50" rows="10" id="output-xml"></textarea>
+                </td>
+                <td>
+                    <label for="postprocessed-xml">Postprocessed XML</label>
+                    <textarea cols="50" rows="10" id="postprocessed-xml"></textarea>
+                </td>
+            </tr>
+        </table>
+    </body>
+    <script>
+        function transform(xslt, xml, params) {
+            var processor = new XSLTProcessor();
+            var parser = new DOMParser();
+            var xsltDom = parser.parseFromString(xslt, "application/xml");
+            // TODO: check errors .documentElement.nodeName == "parsererror"
+            var xmlDom = parser.parseFromString(xml, "application/xml");
+            processor.importStylesheet(xsltDom);
+            if (typeof params !== 'undefined') {
+                params.forEach(function(value, key) {
+                    processor.setParameter("", key, value);
+                });
+            }
+            var result = processor.transformToDocument(xmlDom);
+            var serializer = new XMLSerializer();
+            return serializer.serializeToString(result);
+        }
+        function parseParams(s) {
+            var params = new Map();
+            params.set("param", "" + s);
+            var rows = s.split("\n");
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var index = row.indexOf("=");
+                if (index > 0) {
+                    var key = row.substring(0, index).trim();
+                    var value = row.substring(index + 1).trim();
+                    if (key.length > 0) {
+                        params.set(key, value);
+                    }
+                }
+            }
+            return params;
+        }
+        function doPreprocessing() {
+            var xslt = document.getElementById("preprocessor-xslt").value;
+            var xml = document.getElementById("input-xml").value;
+            var result = transform(xslt, xml);
+            document.getElementById("output-xml").value = result;
+        }
+        function doProcessing() {
+            var params = parseParams(document.getElementById("parameters").value);
+            var xslt = document.getElementById("processor-xslt").value;
+            var xml = document.getElementById("output-xml").value;
+            var result = transform(xslt, xml, params);
+            document.getElementById("output-xml").value = result;
+        }
+        function doPostprocessing() {
+            var xslt = document.getElementById("postprocessor-xslt").value;
+            var xml = document.getElementById("output-xml").value;
+            var result = transform(xslt, xml);
+            document.getElementById("postprocessed-xml").value = result;
+            document.getElementById("output").innerHTML = result;
+        }
+        function onInit() {
+            doPreprocessing();
+            doPostprocessing();
+        }
+        function onStep() {
+            doProcessing();
+            doPostprocessing();
+        }
+    </script>
+</html>
