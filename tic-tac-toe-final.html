@@ -165,14 +165,29 @@
                         <xsl:with-param name="board" select="$board_after_human_move"/>
                     </xsl:call-template>
                 </xsl:variable>
-                <board>
-                    <xsl:value-of select="$board_after_computer_move"/>
-                </board>
-                <state>
-                    <xsl:call-template name="get_board_state">
-                        <xsl:with-param name="board" select="$board_after_computer_move"/>
-                    </xsl:call-template>
-                </state>
+                <xsl:choose>
+                    <xsl:when test="string($board_after_computer_move) = 'error'">
+                        <board>
+                            <xsl:value-of select="$board_after_human_move"/>
+                        </board>
+                        <state>
+                            <xsl:text>error</xsl:text>
+                        </state>
+                        <message>
+                            <xsl:text>Но так нельзя! У меня все ходы записаны! Давай сначала.</xsl:text>
+                        </message>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <board>
+                            <xsl:value-of select="$board_after_computer_move"/>
+                        </board>
+                        <state>
+                            <xsl:call-template name="get_board_state">
+                                <xsl:with-param name="board" select="$board_after_computer_move"/>
+                            </xsl:call-template>
+                        </state>
+                    </xsl:otherwise>
+                </xsl:choose>
             </xsl:when>
             <xsl:otherwise>
                 <board>
@@ -1164,6 +1179,7 @@
             <xsl:when test="$board = 'O2X4O6OXX'"><xsl:text>O2XOO6OXX</xsl:text></xsl:when>
             <xsl:when test="$board = 'O23XO6OXX'"><xsl:text>O2OXO6OXX</xsl:text></xsl:when>
             <xsl:when test="$board = 'O234OXOXX'"><xsl:text>O2O4OXOXX</xsl:text></xsl:when>
+            <xsl:otherwise><xsl:text>error</xsl:text></xsl:otherwise>
         </xsl:choose>
     </xsl:template>
 
